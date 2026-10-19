@@ -3,24 +3,50 @@ import { discover } from '../discover/index.js';
 import { Repo } from '../introspect/index.js';
 import { extract } from '../parse/extract.js';
 import { rules as allRules } from '../rules/index.js';
+import { type Config, defaultConfig } from './config.js';
 import type { Rule } from './rule.js';
+import { parseSuppressions } from './suppress.js';
 import type { Finding } from './types.js';
 
 export interface CheckOptions {
+  config?: Config;
+  /** n'exécuter que ces règles (IDs) */
+  only?: string[];
+  /** désactiver ces règles (IDs) */
+  skip?: string[];
   rules?: Rule[];
 }
 
 export async function check(root: string, opts: CheckOptions = {}): Promise<Finding[]> {
+  const config = opts.config ?? defaultConfig();
   const absRoot = path.resolve(root);
   const repo = new Repo(absRoot);
-  const files = await discover(absRoot);
-  const active = opts.rules ?? allRules;
+  const files = await discover(absRoot, { files: config.files, ignorePaths: config.ignorePaths });
+  const only = opts.only?.map((x) => x.toUpperCase());
+  const skip = new Set((opts.skip ?? []).map((x) => x.toUpperCase()));
+  const active = (opts.rules ?? allRules).filter(
+    (r) => (!only || only.includes(r.id)) && !skip.has(r.id) && config.rules[r.id] !== 'off',
+  );
+
   const findings: Finding[] = [];
   for (const file of files) {
     const extracted = extract(file.content);
+    const suppress = parseSuppressions(file.content);
     const dir = path.posix.dirname(file.path);
     const fileDir = dir === '.' ? '' : dir;
-    for (const rule of active) findings.push(...rule.run({ file, fileDir, extracted, repo }));
+    for (const rule of active) {
+      const override = config.rules[rule.id];
+      for (const f of rule.run({ file, fileDir, extracted, repo })) {
+        if (suppress.isSuppressed(f.ruleId, f.line)) continue;
+        findings.push(override && override !== 'off' ? { ...f, severity: override } : f);
+      }
+    }
   }
   return findings.sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line);
+}
+
+const RANK = { info: 0, warn: 1, error: 2 } as const;
+
+export function exceeds(findings: Finding[], failOn: 'error' | 'warn' | 'info'): boolean {
+  return findings.some((f) => RANK[f.severity] >= RANK[failOn]);
 }

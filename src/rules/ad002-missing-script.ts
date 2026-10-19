@@ -7,6 +7,8 @@ const NODE_TOOLS = new Set(['npm', 'pnpm', 'yarn', 'bun']);
 export const ad002: Rule = {
   id: 'AD002',
   name: 'missing-script',
+  description:
+    'A command such as `npm run X`, `pnpm X` or `make X` refers to a script or target that is not defined in package.json or the Makefile. In monorepos, the closest package.json is used first, then parent folders.',
   defaultSeverity: 'error',
   run({ file, fileDir, extracted, repo }) {
     const findings: Finding[] = [];

@@ -12,6 +12,7 @@ export interface RuleContext {
 export interface Rule {
   id: string;
   name: string;
+  description: string;
   defaultSeverity: Severity;
   run(ctx: RuleContext): Finding[];
 }

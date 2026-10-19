@@ -14,6 +14,8 @@ function clean(target: string): string | null {
 export const ad005: Rule = {
   id: 'AD005',
   name: 'broken-reference',
+  description:
+    'A relative Markdown link or an `@file` import points to a file that does not exist. URLs and anchors are ignored.',
   defaultSeverity: 'error',
   run({ file, fileDir, extracted, repo }) {
     const findings: Finding[] = [];

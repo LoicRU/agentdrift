@@ -5,6 +5,8 @@ const GENERATED = /^(?:\.\/)?(?:dist|build|out|coverage|node_modules|\.next|\.tu
 export const ad001: Rule = {
   id: 'AD001',
   name: 'missing-path',
+  description:
+    'A path cited in the instructions does not exist in the repository. Agents waste time looking for files that were moved or deleted. Generated folders (dist, build, node_modules…) are ignored.',
   defaultSeverity: 'warn',
   run({ file, fileDir, extracted, repo }) {
     return extracted.paths

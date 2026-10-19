@@ -5,6 +5,8 @@ import { PRECISION, compare, parts } from '../util/version.js';
 export const ad004: Rule = {
   id: 'AD004',
   name: 'runtime-version-mismatch',
+  description:
+    'A Node, Python or Go version cited in the text differs from the one declared in .nvmrc, .node-version, .python-version, .tool-versions, engines, requires-python or go.mod. "18+" and ">= 18" are treated as minimums.',
   defaultSeverity: 'warn',
   run({ file, fileDir, extracted, repo }) {
     const findings: Finding[] = [];

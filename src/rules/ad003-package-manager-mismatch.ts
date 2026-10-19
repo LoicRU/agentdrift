@@ -6,6 +6,8 @@ const NODE_PMS = new Set(['npm', 'pnpm', 'yarn', 'bun']);
 export const ad003: Rule = {
   id: 'AD003',
   name: 'package-manager-mismatch',
+  description:
+    'The instructions use a package manager (npm, pnpm, yarn, bun) different from the one the repo uses, according to the `packageManager` field or the lockfile. Global installs (-g) are ignored.',
   defaultSeverity: 'warn',
   run({ file, fileDir, extracted, repo }) {
     const detected = repo.packageManager(fileDir);

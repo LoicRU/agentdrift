@@ -3,6 +3,8 @@ import type {
   Extracted,
   ExtractedCommand,
   ExtractedPath,
+  ExtractedVersion,
+  Runtime,
   Tool,
 } from '../core/types.js';
 import { parseMarkdown } from './markdown.js';
@@ -15,6 +17,41 @@ const TOOLS: Record<string, Tool> = {
 const PLACEHOLDER = /[<>{}$*[\]]|\.\.\./;
 const EXAMPLE_PREFIX = /(par exemple|for example|e\.g\.|example)\s*:?\s*$/i;
 const PATH_RE = /^(?:\.{1,2}\/)?(?:[\w.@-]+\/)+[\w.@-]*$|^[\w.@-]+\.(?:md|json|ya?ml|toml|ts|tsx|js|jsx|mjs|cjs|py|rs|go|sh|mdc|lock)$/;
+
+const VERSION_RE = /\b([Nn]ode(?:\.js)?|NodeJS|Python|Golang|Go)\s+(?:(≥|>=)\s*)?v?(\d+(?:\.\d+){0,2})(\+)?/g;
+const IMPORT_RE = /^@(\S+)/;
+
+function runtimeOf(name: string): Runtime {
+  if (/^python$/i.test(name)) return 'python';
+  if (/^go/i.test(name)) return 'go';
+  return 'node';
+}
+
+function position(start: { line: number; column: number }, value: string, idx: number) {
+  const before = value.slice(0, idx);
+  const nl = before.split('\n').length - 1;
+  const col = nl === 0 ? start.column + idx : idx - before.lastIndexOf('\n');
+  return { line: start.line + nl, column: col };
+}
+
+function scanVersions(
+  value: string,
+  start: { line: number; column: number },
+  out: ExtractedVersion[],
+): void {
+  for (const m of value.matchAll(VERSION_RE)) {
+    const runtime = runtimeOf(m[1] ?? '');
+    const version = m[3] ?? '';
+    if (runtime === 'go' && !version.includes('.')) continue; // "Go 2 steps"
+    out.push({
+      runtime,
+      version,
+      orMore: Boolean(m[2] || m[4]),
+      raw: m[0],
+      ...position(start, value, m.index ?? 0),
+    });
+  }
+}
 
 /** Analyse une ligne de commande. Retourne null si ce n'est pas une commande reconnue. */
 export function parseCommand(raw: string): Pick<ExtractedCommand, 'tool' | 'script'> | null {
@@ -79,7 +116,7 @@ function walk(node: RootContent | Root, visit: (n: RootContent, prev?: RootConte
 export function extract(content: string): Extracted {
   const tree = parseMarkdown(content);
   const lines = content.split('\n');
-  const result: Extracted = { commands: [], paths: [], links: [] };
+  const result: Extracted = { commands: [], paths: [], links: [], imports: [], versions: [] };
 
   walk(tree, (node) => {
     const pos = node.position;
@@ -95,8 +132,23 @@ export function extract(content: string): Extracted {
       return;
     }
 
+    if (node.type === 'text') {
+      const value = (node as { value: string }).value;
+      scanVersions(value, pos.start, result.versions);
+      for (const m of value.matchAll(/(?:^|\n)(@\S+)/g)) {
+        const target = IMPORT_RE.exec(m[1] ?? '')?.[1];
+        const atStart = m.index === 0 && pos.start.column === 1;
+        if (target && (atStart || m[0].startsWith('\n')) && /\.\w+$/.test(target)) {
+          const idx = (m.index ?? 0) + (m[0].startsWith('\n') ? 1 : 0);
+          result.imports.push({ target, ...position(pos.start, value, idx) });
+        }
+      }
+      return;
+    }
+
     if (node.type === 'inlineCode') {
       const value = (node as InlineCode).value;
+      scanVersions(value, pos.start, result.versions);
       const before = (lines[line - 1] ?? '').slice(0, column - 1);
       if (EXAMPLE_PREFIX.test(before)) return;
       const cmds = lineCmds(value, line, column, 'medium');

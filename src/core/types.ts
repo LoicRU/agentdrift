@@ -36,10 +36,25 @@ export interface ExtractedLink {
   column: number;
 }
 
+export type Runtime = 'node' | 'python' | 'go';
+
+export interface ExtractedVersion {
+  runtime: Runtime;
+  version: string;
+  /** "18+", ">= 18" : version minimale citée */
+  orMore: boolean;
+  raw: string;
+  line: number;
+  column: number;
+}
+
 export interface Extracted {
   commands: ExtractedCommand[];
   paths: ExtractedPath[];
   links: ExtractedLink[];
+  /** imports `@fichier` (CLAUDE.md) */
+  imports: ExtractedLink[];
+  versions: ExtractedVersion[];
 }
 
 export interface AgentFile {

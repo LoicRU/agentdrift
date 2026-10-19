@@ -56,7 +56,9 @@ export class Repo {
         const file = path.join(dir, 'package.json');
         if (!existsSync(file)) return [];
         try {
-          const json = JSON.parse(readFileSync(file, 'utf8')) as { scripts?: Record<string, string> };
+          const json = JSON.parse(readFileSync(file, 'utf8')) as {
+            scripts?: Record<string, string>;
+          };
           return [{ dir, scripts: Object.keys(json.scripts ?? {}) }];
         } catch {
           return [];
@@ -127,10 +129,16 @@ export class Repo {
         const f = path.join(dir, name);
         return existsSync(f) ? readFileSync(f, 'utf8') : null;
       };
-      const toolNames = { node: ['nodejs', 'node'], python: ['python'], go: ['golang', 'go'] }[runtime];
+      const toolNames = { node: ['nodejs', 'node'], python: ['python'], go: ['golang', 'go'] }[
+        runtime
+      ];
       for (const dir of this.chain(fileDir)) {
         const files =
-          runtime === 'node' ? ['.nvmrc', '.node-version'] : runtime === 'python' ? ['.python-version'] : [];
+          runtime === 'node'
+            ? ['.nvmrc', '.node-version']
+            : runtime === 'python'
+              ? ['.python-version']
+              : [];
         for (const name of files) {
           const v = firstVersion(read(dir, name) ?? '');
           if (v) return { version: v, exact: true, source: name };
@@ -142,7 +150,9 @@ export class Repo {
         }
         if (runtime === 'node') {
           try {
-            const j = JSON.parse(read(dir, 'package.json') ?? 'null') as { engines?: { node?: string } } | null;
+            const j = JSON.parse(read(dir, 'package.json') ?? 'null') as {
+              engines?: { node?: string };
+            } | null;
             const v = firstVersion(j?.engines?.node ?? '');
             if (v) return { version: v, exact: false, source: 'package.json "engines"' };
           } catch {

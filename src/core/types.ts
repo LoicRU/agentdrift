@@ -12,8 +12,18 @@ export interface Finding {
 }
 
 export type Tool =
-  | 'npm' | 'pnpm' | 'yarn' | 'bun' | 'make' | 'just'
-  | 'pip' | 'uv' | 'poetry' | 'cargo' | 'go' | 'other';
+  | 'npm'
+  | 'pnpm'
+  | 'yarn'
+  | 'bun'
+  | 'make'
+  | 'just'
+  | 'pip'
+  | 'uv'
+  | 'poetry'
+  | 'cargo'
+  | 'go'
+  | 'other';
 
 export interface ExtractedCommand {
   raw: string;

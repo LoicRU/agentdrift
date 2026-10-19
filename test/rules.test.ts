@@ -1,4 +1,4 @@
-import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -65,6 +65,8 @@ describe('AD001 missing-path', () => {
       'AGENTS.md': 'Voir `src/index.ts`, `src/legacy/` et `dist/`.',
     });
     const f = await check(root);
-    expect(f.map((x) => x.message)).toEqual(['Path "src/legacy/" does not exist in the repository.']);
+    expect(f.map((x) => x.message)).toEqual([
+      'Path "src/legacy/" does not exist in the repository.',
+    ]);
   });
 });

@@ -2,7 +2,12 @@ const NEXT = /<!--\s*agentdrift-disable-next-line(?:\s+([A-Za-z0-9,\s]+?))?\s*--
 const FILE = /<!--\s*agentdrift-disable-file(?:\s+([A-Za-z0-9,\s]+?))?\s*-->/;
 
 const ids = (s: string | undefined): string[] | 'all' =>
-  s?.trim() ? s.split(/[\s,]+/).filter(Boolean).map((x) => x.toUpperCase()) : 'all';
+  s?.trim()
+    ? s
+        .split(/[\s,]+/)
+        .filter(Boolean)
+        .map((x) => x.toUpperCase())
+    : 'all';
 
 export interface Suppressions {
   isSuppressed(ruleId: string, line: number): boolean;

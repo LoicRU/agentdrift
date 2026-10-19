@@ -38,7 +38,9 @@ export const ad002: Rule = {
         file: file.path,
         line: cmd.line,
         column: cmd.column,
-        suggestion: hints.length ? `Did you mean ${hints.map((h) => `"${h}"`).join(' or ')}?` : undefined,
+        suggestion: hints.length
+          ? `Did you mean ${hints.map((h) => `"${h}"`).join(' or ')}?`
+          : undefined,
       });
     }
     return findings;

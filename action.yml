@@ -1,0 +1,46 @@
+name: AgentDrift
+description: Check that AGENTS.md, CLAUDE.md, SKILL.md... still match your repository.
+author: LoicRU
+branding:
+  icon: check-circle
+  color: blue
+
+inputs:
+  paths:
+    description: Directory to check.
+    default: '.'
+  fail-on:
+    description: Minimum severity that fails the job (error | warn | info).
+    default: 'error'
+  changed-only:
+    description: Only check agent files changed in the PR (needs actions/checkout with fetch-depth 0).
+    default: 'false'
+  base:
+    description: Git ref to compare against with changed-only. Defaults to the PR base branch.
+    default: ''
+  version:
+    description: agentdrift version from npm.
+    default: 'latest'
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+    - name: Run AgentDrift
+      shell: bash
+      env:
+        AD_PATHS: ${{ inputs.paths }}
+        AD_FAIL_ON: ${{ inputs.fail-on }}
+        AD_CHANGED: ${{ inputs.changed-only }}
+        AD_BASE: ${{ inputs.base }}
+        AD_VERSION: ${{ inputs.version }}
+        AD_PR_BASE: ${{ github.base_ref }}
+      run: |
+        args=(check "$AD_PATHS" --format github --fail-on "$AD_FAIL_ON")
+        if [ "$AD_CHANGED" = "true" ]; then
+          base="${AD_BASE:-origin/${AD_PR_BASE:-main}}"
+          args+=(--changed-only --base "$base")
+        fi
+        npx --yes "agentdrift@${AD_VERSION}" "${args[@]}"

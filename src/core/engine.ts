@@ -3,6 +3,7 @@ import { discover } from '../discover/index.js';
 import { Repo } from '../introspect/index.js';
 import { extract } from '../parse/extract.js';
 import { rules as allRules } from '../rules/index.js';
+import { selectFiles } from './changed.js';
 import { type Config, defaultConfig } from './config.js';
 import type { Rule } from './rule.js';
 import { parseSuppressions } from './suppress.js';
@@ -15,13 +16,22 @@ export interface CheckOptions {
   /** désactiver ces règles (IDs) */
   skip?: string[];
   rules?: Rule[];
+  /** fichiers modifiés (--changed-only) ; ne vérifie que les fichiers d'agents concernés */
+  changed?: string[];
 }
 
 export async function check(root: string, opts: CheckOptions = {}): Promise<Finding[]> {
   const config = opts.config ?? defaultConfig();
   const absRoot = path.resolve(root);
   const repo = new Repo(absRoot);
-  const files = await discover(absRoot, { files: config.files, ignorePaths: config.ignorePaths });
+  let files = await discover(absRoot, { files: config.files, ignorePaths: config.ignorePaths });
+  if (opts.changed) {
+    const keep = selectFiles(
+      files.map((f) => f.path),
+      opts.changed,
+    );
+    if (keep) files = files.filter((f) => keep.includes(f.path));
+  }
   const only = opts.only?.map((x) => x.toUpperCase());
   const skip = new Set((opts.skip ?? []).map((x) => x.toUpperCase()));
   const active = (opts.rules ?? allRules).filter(

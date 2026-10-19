@@ -17,7 +17,13 @@ export function levenshtein(a: string, b: string): number {
 export function suggest(name: string, candidates: string[]): string[] {
   const max = Math.max(2, Math.floor(name.length / 3));
   return candidates
-    .map((c) => ({ c, d: c.startsWith(name) || name.startsWith(c) || c.split(':')[0] === name.split(':')[0] ? 1 : levenshtein(name, c) }))
+    .map((c) => ({
+      c,
+      d:
+        c.startsWith(name) || name.startsWith(c) || c.split(':')[0] === name.split(':')[0]
+          ? 1
+          : levenshtein(name, c),
+    }))
     .filter((x) => x.d <= max)
     .sort((x, y) => x.d - y.d || x.c.localeCompare(y.c))
     .slice(0, 3)

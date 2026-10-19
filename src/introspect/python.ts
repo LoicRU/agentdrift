@@ -11,7 +11,11 @@ export function parsePyprojectScripts(content: string): string[] {
       if (sub?.[1]) names.add(sub[1]);
       continue;
     }
-    if (section === 'project.scripts' || section === 'tool.poe.tasks' || section === 'tool.poetry.scripts') {
+    if (
+      section === 'project.scripts' ||
+      section === 'tool.poe.tasks' ||
+      section === 'tool.poetry.scripts'
+    ) {
       const kv = /^([\w.-]+)\s*=/.exec(line);
       if (kv?.[1]) names.add(kv[1]);
     }

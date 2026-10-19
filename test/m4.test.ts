@@ -48,7 +48,9 @@ describe('suppression et config', () => {
   });
   it('rules off / override de sévérité / ignorePaths', async () => {
     const root = repo({ 'AGENTS.md': '`src/x/`', 'docs/legacy/AGENTS.md': '`src/y/`' });
-    const cfg = loadConfig(repo({ '.agentdrift.json': '{"rules":{"AD001":"error"},"ignorePaths":["docs/legacy/**"]}' }));
+    const cfg = loadConfig(
+      repo({ '.agentdrift.json': '{"rules":{"AD001":"error"},"ignorePaths":["docs/legacy/**"]}' }),
+    );
     const f = await check(root, { config: cfg });
     expect(f.map((x) => [x.file, x.severity])).toEqual([['AGENTS.md', 'error']]);
     const off = loadConfig(repo({ '.agentdrift.json': '{"rules":{"AD001":"off"}}' }));

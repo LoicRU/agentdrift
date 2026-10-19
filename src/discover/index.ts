@@ -3,8 +3,23 @@ import path from 'node:path';
 import type { AgentFile } from '../core/types.js';
 import { matchesAny } from '../util/glob.js';
 
-const NAMES = new Set(['AGENTS.md', 'CLAUDE.md', 'GEMINI.md', 'SKILL.md', '.cursorrules', '.windsurfrules']);
-const IGNORED_DIRS = new Set(['node_modules', '.git', 'dist', 'build', 'target', '.venv', 'vendor']);
+const NAMES = new Set([
+  'AGENTS.md',
+  'CLAUDE.md',
+  'GEMINI.md',
+  'SKILL.md',
+  '.cursorrules',
+  '.windsurfrules',
+]);
+const IGNORED_DIRS = new Set([
+  'node_modules',
+  '.git',
+  'dist',
+  'build',
+  'target',
+  '.venv',
+  'vendor',
+]);
 
 function isAgentFile(rel: string): boolean {
   const base = rel.split('/').pop() ?? '';

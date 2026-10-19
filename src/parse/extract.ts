@@ -11,14 +11,25 @@ import { parseMarkdown } from './markdown.js';
 
 const SHELL_LANGS = new Set(['bash', 'sh', 'shell', 'console', 'powershell', 'zsh']);
 const TOOLS: Record<string, Tool> = {
-  npm: 'npm', pnpm: 'pnpm', yarn: 'yarn', bun: 'bun', make: 'make', just: 'just',
-  pip: 'pip', uv: 'uv', poetry: 'poetry', cargo: 'cargo', go: 'go',
+  npm: 'npm',
+  pnpm: 'pnpm',
+  yarn: 'yarn',
+  bun: 'bun',
+  make: 'make',
+  just: 'just',
+  pip: 'pip',
+  uv: 'uv',
+  poetry: 'poetry',
+  cargo: 'cargo',
+  go: 'go',
 };
 const PLACEHOLDER = /[<>{}$*[\]]|\.\.\./;
 const EXAMPLE_PREFIX = /(par exemple|for example|e\.g\.|example)\s*:?\s*$/i;
-const PATH_RE = /^(?:\.{1,2}\/)?(?:[\w.@-]+\/)+[\w.@-]*$|^[\w.@-]+\.(?:md|json|ya?ml|toml|ts|tsx|js|jsx|mjs|cjs|py|rs|go|sh|mdc|lock)$/;
+const PATH_RE =
+  /^(?:\.{1,2}\/)?(?:[\w.@-]+\/)+[\w.@-]*$|^[\w.@-]+\.(?:md|json|ya?ml|toml|ts|tsx|js|jsx|mjs|cjs|py|rs|go|sh|mdc|lock)$/;
 
-const VERSION_RE = /\b([Nn]ode(?:\.js)?|NodeJS|Python|Golang|Go)\s+(?:(≥|>=)\s*)?v?(\d+(?:\.\d+){0,2})(\+)?/g;
+const VERSION_RE =
+  /\b([Nn]ode(?:\.js)?|NodeJS|Python|Golang|Go)\s+(?:(≥|>=)\s*)?v?(\d+(?:\.\d+){0,2})(\+)?/g;
 const IMPORT_RE = /^@(\S+)/;
 
 function runtimeOf(name: string): Runtime {

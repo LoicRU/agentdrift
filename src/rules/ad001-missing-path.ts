@@ -1,6 +1,7 @@
 import type { Rule } from '../core/rule.js';
 
-const GENERATED = /^(?:\.\/)?(?:dist|build|out|coverage|node_modules|\.next|\.turbo|target|\.venv|tmp)(?:\/|$)/;
+const GENERATED =
+  /^(?:\.\/)?(?:dist|build|out|coverage|node_modules|\.next|\.turbo|target|\.venv|tmp)(?:\/|$)/;
 
 export const ad001: Rule = {
   id: 'AD001',

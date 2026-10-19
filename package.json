@@ -1,0 +1,30 @@
+{
+  "name": "agentdrift",
+  "version": "0.0.1",
+  "description": "Checks that your AI agent instruction files (AGENTS.md, CLAUDE.md, SKILL.md...) still match your repo.",
+  "license": "MIT",
+  "type": "module",
+  "bin": { "agentdrift": "dist/cli.js" },
+  "files": ["dist"],
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check ."
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "remark-parse": "^11.0.0",
+    "unified": "^11.0.5"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/mdast": "^4.0.4",
+    "@types/node": "^22.0.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

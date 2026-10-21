@@ -12,6 +12,7 @@ function repo(files: Record<string, string>): string {
     mkdirSync(path.dirname(abs), { recursive: true });
     writeFileSync(abs, content);
   }
+  for (const d of ['src', 'a', 'b']) mkdirSync(path.join(root, d), { recursive: true });
   return root;
 }
 
@@ -68,5 +69,31 @@ describe('AD001 missing-path', () => {
     expect(f.map((x) => x.message)).toEqual([
       'Path "src/legacy/" does not exist in the repository.',
     ]);
+  });
+});
+
+describe('AD001 anti faux positifs', () => {
+  it('ignore : dossier à segment unique, gitignoré, ligne "généré", SKILL.md, nom npm, nom de fichier seul', async () => {
+    const root = repo({
+      '.gitignore': 'src/generated/\n',
+      'AGENTS.md': [
+        'Voir `wiki/` et `src/generated/api.ts`.',
+        'Fichier auto-généré : `src/out/x.ts` (generated).',
+        'Importer `@scope/pkg` et `Foo.ts`.',
+        'Réel : `src/legacy/`.',
+      ].join('\n'),
+      'skills/SKILL.md': 'Écrire `src/nope/a.ts`.',
+    });
+    const f = await check(root);
+    expect(f.map((x) => x.message)).toEqual([
+      'Path "src/legacy/" does not exist in the repository.',
+    ]);
+  });
+  it('un chemin existant ailleurs (suffixe) est accepté', async () => {
+    const root = repo({
+      'packages/x/src/core/a.ts': '',
+      'packages/x/AGENTS.md': 'Voir `src/core/a.ts`.',
+    });
+    expect(await check(root)).toEqual([]);
   });
 });

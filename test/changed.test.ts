@@ -20,6 +20,8 @@ describe('changed-only', () => {
   it('engine : filtre appliqué', async () => {
     const root = mkdtempSync(path.join(tmpdir(), 'ad5-'));
     mkdirSync(path.join(root, 'pkg'));
+    mkdirSync(path.join(root, 'a'));
+    mkdirSync(path.join(root, 'b'));
     writeFileSync(path.join(root, 'AGENTS.md'), '`a/gone/`');
     writeFileSync(path.join(root, 'pkg/CLAUDE.md'), '`b/gone/`');
     const f = await check(root, { changed: ['pkg/CLAUDE.md'] });

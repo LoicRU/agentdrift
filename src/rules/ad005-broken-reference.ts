@@ -22,7 +22,7 @@ export const ad005: Rule = {
     const check = (items: { target: string; line: number; column: number }[], kind: string) => {
       for (const it of items) {
         const t = clean(it.target);
-        if (!t || repo.existsFrom(fileDir, t)) continue;
+        if (!t || repo.existsFrom(fileDir, t) || repo.isGitignored(t, fileDir)) continue;
         findings.push({
           ruleId: 'AD005',
           severity: 'error',

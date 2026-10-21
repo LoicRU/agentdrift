@@ -1,5 +1,6 @@
 import type { Rule } from '../core/rule.js';
 import type { Finding } from '../core/types.js';
+import { isNotAClaim } from '../util/claims.js';
 import { PRECISION, compare, parts } from '../util/version.js';
 
 export const ad004: Rule = {
@@ -10,7 +11,9 @@ export const ad004: Rule = {
   defaultSeverity: 'warn',
   run({ file, fileDir, extracted, repo }) {
     const findings: Finding[] = [];
+    const lines = file.content.split('\n');
     for (const v of extracted.versions) {
+      if (isNotAClaim(lines[v.line - 1] ?? '')) continue;
       const declared = repo.declaredVersion(v.runtime, fileDir);
       if (!declared) continue;
       const cited = parts(v.version);

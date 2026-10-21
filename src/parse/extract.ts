@@ -25,8 +25,8 @@ const TOOLS: Record<string, Tool> = {
 };
 const PLACEHOLDER = /[<>{}$*[\]]|\.\.\./;
 const EXAMPLE_PREFIX = /(par exemple|for example|e\.g\.|example)\s*:?\s*$/i;
-const PATH_RE =
-  /^(?:\.{1,2}\/)?(?:[\w.@-]+\/)+[\w.@-]*$|^[\w.@-]+\.(?:md|json|ya?ml|toml|ts|tsx|js|jsx|mjs|cjs|py|rs|go|sh|mdc|lock)$/;
+/** Chemin avec au moins un `/`, qui finit par `/` ou par un nom avec extension. Pas de `@scope/pkg`. */
+const PATH_RE = /^(?:\.{1,2}\/)?(?:[\w.-]+\/)+(?:[\w.-]+\.\w+|)$/;
 
 const VERSION_RE =
   /\b([Nn]ode(?:\.js)?|NodeJS|Python|Golang|Go)\s+(?:(≥|>=)\s*)?v?(\d+(?:\.\d+){0,2})(\+)?/g;
@@ -71,6 +71,14 @@ export function parseCommand(raw: string): Pick<ExtractedCommand, 'tool' | 'scri
   const [bin, ...args] = line.split(/\s+/);
   const tool = bin ? TOOLS[bin] : undefined;
   if (!tool || !bin) return null;
+  // -w/--workspace/--filter/--prefix : le script vit dans un autre package, on s'abstient
+  if (
+    args.some((a) =>
+      /^(-w|-F|-C|--workspaces?(=.*)?|--filter(=.*)?|--prefix(=.*)?|--cwd(=.*)?)$/.test(a),
+    )
+  ) {
+    return { tool };
+  }
   const rest = args.filter((a) => !a.startsWith('-'));
   const first = rest[0];
 

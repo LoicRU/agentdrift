@@ -1,6 +1,7 @@
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import type { Runtime } from '../core/types.js';
+import { globToRegExp } from '../util/glob.js';
 import { parseMakeTargets } from './make.js';
 
 export interface NodeScope {
@@ -80,15 +81,76 @@ export class Repo {
     });
   }
 
-  /** Un chemin existe s'il existe depuis la racine ou depuis le dossier du fichier. */
+  /**
+   * Tous les suffixes de chemins du dépôt ("a/b/c" => "c", "b/c", "a/b/c").
+   * Permet de reconnaître "src/foo/" cité depuis packages/x/AGENTS.md pour packages/x/src/foo.
+   */
+  private suffixes(): Set<string> {
+    return this.memo('suffixes', () => {
+      const set = new Set<string>();
+      const skip = new Set(['.git', 'node_modules', 'dist', 'build', 'target', '.venv', 'vendor']);
+      let count = 0;
+      const walk = (dir: string, rel: string[]): void => {
+        if (count > 100_000) return;
+        let entries: import('node:fs').Dirent[];
+        try {
+          entries = readdirSync(dir, { withFileTypes: true });
+        } catch {
+          return;
+        }
+        for (const e of entries) {
+          const parts = [...rel, e.name];
+          for (let i = 0; i < parts.length; i++) set.add(parts.slice(i).join('/'));
+          count++;
+          if (e.isDirectory() && !skip.has(e.name)) walk(path.join(dir, e.name), parts);
+        }
+      };
+      walk(this.root, []);
+      return set;
+    });
+  }
+
+  /** Un chemin existe depuis la racine, depuis le dossier du fichier, ou comme suffixe d'un chemin du dépôt. */
   pathExists(p: string, fileDir: string): boolean {
-    const clean = p.replace(/\/+$/, '');
+    const clean = p.replace(/\/+$/, '').replace(/^\.\//, '');
+    if (this.suffixes().has(clean)) return true;
     return [this.root, path.resolve(this.root, fileDir)].some((base) => {
       try {
         return statSync(path.resolve(base, clean)) !== undefined;
       } catch {
         return false;
       }
+    });
+  }
+
+  /** Vrai si le chemin est couvert par un .gitignore (racine ou dossiers du fichier) : absence normale. */
+  isGitignored(p: string, fileDir = ''): boolean {
+    const clean = p.replace(/^\.\//, '').replace(/\/+$/, '');
+    // tel qu'écrit, et résolu depuis la racine (chemin relatif au dossier du fichier)
+    const variants = [clean, path.posix.join(fileDir, clean)].map((v) => v.split('/'));
+    return this.chain(fileDir).some((dir) =>
+      this.gitignoreMatchers(dir).some((m) => variants.some((segs) => m(segs))),
+    );
+  }
+
+  private gitignoreMatchers(dir: string): ((segs: string[]) => boolean)[] {
+    return this.memo(`gitignore:${dir}`, () => {
+      const f = path.join(dir, '.gitignore');
+      if (!existsSync(f)) return [];
+      const out: ((segs: string[]) => boolean)[] = [];
+      for (const raw of readFileSync(f, 'utf8').split('\n')) {
+        let line = raw.trim();
+        if (!line || line.startsWith('#') || line.startsWith('!')) continue;
+        const anchored = line.startsWith('/') || line.replace(/\/$/, '').includes('/');
+        line = line.replace(/^\//, '').replace(/\/$/, '');
+        const re = globToRegExp(line);
+        out.push((segs) =>
+          anchored
+            ? segs.some((_, i) => re.test(segs.slice(0, i + 1).join('/')))
+            : segs.some((seg) => re.test(seg)),
+        );
+      }
+      return out;
     });
   }
 

@@ -1,5 +1,6 @@
 import type { Rule } from '../core/rule.js';
 import type { Finding } from '../core/types.js';
+import { isNotAClaim } from '../util/claims.js';
 import { suggest } from '../util/levenshtein.js';
 
 const NODE_TOOLS = new Set(['npm', 'pnpm', 'yarn', 'bun']);
@@ -12,8 +13,9 @@ export const ad002: Rule = {
   defaultSeverity: 'error',
   run({ file, fileDir, extracted, repo }) {
     const findings: Finding[] = [];
+    const lines = file.content.split('\n');
     for (const cmd of extracted.commands) {
-      if (!cmd.script) continue;
+      if (!cmd.script || isNotAClaim(lines[cmd.line - 1] ?? '')) continue;
       let available: string[] | null = null;
       let source = '';
 

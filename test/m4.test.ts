@@ -14,6 +14,7 @@ function repo(files: Record<string, string>): string {
     mkdirSync(path.dirname(abs), { recursive: true });
     writeFileSync(abs, content);
   }
+  for (const d of ['src', 'a', 'b']) mkdirSync(path.join(root, d), { recursive: true });
   return root;
 }
 

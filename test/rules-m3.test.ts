@@ -36,6 +36,20 @@ describe('AD003', () => {
     });
     expect(await ids(root)).toEqual(['AD003@1']);
   });
+  it('ignore une phrase qui interdit la commande, pas qui la recommande', async () => {
+    const root = repo({
+      'pnpm-lock.yaml': '',
+      'AGENTS.md': 'Do not run `npm test`, use pnpm.\n',
+    });
+    expect(await ids(root)).toEqual([]);
+  });
+  it("ignore 'npm = valeur' (affectation, pas une commande)", async () => {
+    const root = repo({
+      'pnpm-lock.yaml': '',
+      'AGENTS.md': '`npm = "@ai-sdk/openai-compatible"` is used by both labs.',
+    });
+    expect(await ids(root)).toEqual([]);
+  });
 });
 
 describe('AD004', () => {

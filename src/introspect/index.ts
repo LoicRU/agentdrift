@@ -2,7 +2,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import type { Runtime } from '../core/types.js';
 import { globToRegExp } from '../util/glob.js';
-import { parseMakeTargets } from './make.js';
+import { parseMakeIncludes, parseMakeTargets } from './make.js';
 
 export interface NodeScope {
   dir: string;
@@ -68,17 +68,35 @@ export class Repo {
     );
   }
 
-  /** Cibles Makefile du dossier le plus proche qui en contient un, ou null. */
+  /** Cibles Makefile du dossier le plus proche qui en contient un (en suivant les 'include'), ou null. */
   makeTargets(fileDir: string): string[] | null {
     return this.memo(`make:${fileDir}`, () => {
       for (const dir of this.chain(fileDir)) {
         for (const name of ['Makefile', 'makefile', 'GNUmakefile']) {
           const file = path.join(dir, name);
-          if (existsSync(file)) return parseMakeTargets(readFileSync(file, 'utf8'));
+          if (existsSync(file)) return [...this.collectMakeTargets(file, new Set())];
         }
       }
       return null;
     });
+  }
+
+  private collectMakeTargets(file: string, seen: Set<string>): Set<string> {
+    const targets = new Set<string>();
+    if (seen.has(file)) return targets;
+    seen.add(file);
+    let content: string;
+    try {
+      content = readFileSync(file, 'utf8');
+    } catch {
+      return targets;
+    }
+    for (const t of parseMakeTargets(content)) targets.add(t);
+    const dir = path.dirname(file);
+    for (const inc of parseMakeIncludes(content)) {
+      for (const t of this.collectMakeTargets(path.resolve(dir, inc), seen)) targets.add(t);
+    }
+    return targets;
   }
 
   /**

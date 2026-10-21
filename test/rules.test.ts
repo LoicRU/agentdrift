@@ -48,6 +48,15 @@ describe('AD002 missing-script', () => {
     expect((await check(root))[0]).toMatchObject({ ruleId: 'AD002' });
   });
 
+  it('suit les Makefile "include" et les cibles à deux-points échappés', async () => {
+    const root = repo({
+      Makefile: 'include make/test.mk\n',
+      'make/test.mk': 'test\\:unit\\:vmm:\n\techo\n',
+      'AGENTS.md': '`make test:unit:vmm`',
+    });
+    expect(await check(root)).toEqual([]);
+  });
+
   it('monorepo : utilise le package.json local puis la racine', async () => {
     const root = repo({
       'package.json': JSON.stringify({ scripts: { lint: 'x' } }),

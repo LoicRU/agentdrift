@@ -71,6 +71,7 @@ export function parseCommand(raw: string): Pick<ExtractedCommand, 'tool' | 'scri
   const [bin, ...args] = line.split(/\s+/);
   const tool = bin ? TOOLS[bin] : undefined;
   if (!tool || !bin) return null;
+  if (args[0] === '=' || args[0] === '==') return null; // "npm = ..." : affectation, pas une commande
   // -w/--workspace/--filter/--prefix : le script vit dans un autre package, on s'abstient
   if (
     args.some((a) =>
